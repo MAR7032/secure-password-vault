@@ -66,4 +66,42 @@ class PasswordRecord
 
         return 'Password record saved securely.';
     }
+        public function findAllForUser(int $userId, string $userKey): array
+    {
+        $statement = $this->connection->prepare(
+            'SELECT
+                id,
+                service_name,
+                encrypted_password,
+                password_iv,
+                password_tag,
+                created_at
+             FROM password_records
+             WHERE user_id = :user_id
+             ORDER BY created_at DESC'
+        );
+
+        $statement->execute([
+            'user_id' => $userId
+        ]);
+
+        $records = $statement->fetchAll();
+        $decryptedRecords = [];
+
+        foreach ($records as $record) {
+            $decryptedRecords[] = [
+                'id' => (int) $record['id'],
+                'service_name' => $record['service_name'],
+                'password' => $this->encryptionService->decryptStoredPassword(
+                    $record['encrypted_password'],
+                    $record['password_iv'],
+                    $record['password_tag'],
+                    $userKey
+                ),
+                'created_at' => $record['created_at']
+            ];
+        }
+
+        return $decryptedRecords;
+    }
 }

@@ -102,3 +102,73 @@ body {
     color: #8e1b1b;
     text-align: center;
 }
+
+.records-container {
+    min-height: 100vh;
+    padding: 40px 22px;
+    background: #f2f5f9;
+}
+
+.records-card {
+    max-width: 950px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.10);
+}
+
+.records-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.records-header h1 {
+    color: #173f73;
+    margin: 0 0 7px;
+}
+
+.records-header p {
+    color: #566573;
+    margin: 0;
+}
+
+.small-button {
+    padding: 11px 16px;
+    background: #173f73;
+    color: #ffffff;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.records-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.records-table th,
+.records-table td {
+    border-bottom: 1px solid #dce3ea;
+    padding: 14px 10px;
+    text-align: left;
+}
+
+.records-table th {
+    background: #edf3fb;
+    color: #173f73;
+}
+
+.records-table code {
+    background: #f2f5f9;
+    padding: 6px 8px;
+    border-radius: 4px;
+}
+
+.empty-message {
+    padding: 18px;
+    text-align: center;
+    background: #f2f5f9;
+    border-radius: 6px;
+}

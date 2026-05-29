@@ -65,7 +65,31 @@ class EncryptionService
 
         return $userKey;
     }
+         public function decryptStoredPassword(
+        string $encryptedPassword,
+        string $passwordIv,
+        string $passwordTag,
+        string $userKey
+    ): string {
+        $encryptedValue = $this->decodeValue($encryptedPassword);
+        $iv = $this->decodeValue($passwordIv);
+        $tag = $this->decodeValue($passwordTag);
 
+        $plainPassword = openssl_decrypt(
+            $encryptedValue,
+            self::CIPHER,
+            $userKey,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        if ($plainPassword === false) {
+            throw new RuntimeException('Password decryption failed.');
+        }
+
+        return $plainPassword;
+    }
     public function encryptStoredPassword(
         string $plainPassword,
         string $userKey
