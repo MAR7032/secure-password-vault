@@ -172,3 +172,44 @@ body {
     background: #f2f5f9;
     border-radius: 6px;
 }
+
+.generator-card {
+    max-width: 560px;
+}
+
+.generator-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0 16px;
+}
+
+.generated-result {
+    margin-bottom: 22px;
+    padding: 16px;
+    background: #e9f7ec;
+    border: 1px solid #87c38f;
+    border-radius: 6px;
+}
+
+.generated-result label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #17652b;
+}
+
+.generated-result code {
+    display: block;
+    padding: 12px;
+    background: #ffffff;
+    border-radius: 5px;
+    font-size: 17px;
+    text-align: center;
+    word-break: break-all;
+}
+
+.result-note {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: #17652b;
+}

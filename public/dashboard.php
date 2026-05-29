@@ -33,6 +33,7 @@ $username = $_SESSION['username'];
             <a class="button" href="add_password.php">Add Password Record</a>
 
              <a class="button secondary-button" href="view_passwords.php">View Saved Passwords</a>
+             <a class="button secondary-button" href="generate_password.php">Generate Password</a>
 
            <p class="link-text">
     Encrypted password storage is available.
