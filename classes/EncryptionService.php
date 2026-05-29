@@ -15,15 +15,7 @@ class EncryptionService
         $salt = random_bytes(self::SALT_LENGTH);
         $iv = random_bytes(openssl_cipher_iv_length(self::CIPHER));
 
-        $derivedKey = hash_pbkdf2(
-            'sha256',
-            $plainPassword,
-            $salt,
-            self::ITERATIONS,
-            self::KEY_LENGTH,
-            true
-        );
-
+        $derivedKey = $this->deriveKey($plainPassword, $salt);
         $tag = '';
 
         $encryptedKey = openssl_encrypt(
@@ -45,5 +37,82 @@ class EncryptionService
             'key_tag' => base64_encode($tag),
             'key_salt' => base64_encode($salt)
         ];
+    }
+
+    public function decryptUserKey(
+        string $plainPassword,
+        array $storedKeyData
+    ): string {
+        $encryptedKey = $this->decodeValue($storedKeyData['encrypted_key']);
+        $iv = $this->decodeValue($storedKeyData['key_iv']);
+        $tag = $this->decodeValue($storedKeyData['key_tag']);
+        $salt = $this->decodeValue($storedKeyData['key_salt']);
+
+        $derivedKey = $this->deriveKey($plainPassword, $salt);
+
+        $userKey = openssl_decrypt(
+            $encryptedKey,
+            self::CIPHER,
+            $derivedKey,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        if ($userKey === false) {
+            throw new RuntimeException('Unable to unlock the user key.');
+        }
+
+        return $userKey;
+    }
+
+    public function encryptStoredPassword(
+        string $plainPassword,
+        string $userKey
+    ): array {
+        $iv = random_bytes(openssl_cipher_iv_length(self::CIPHER));
+        $tag = '';
+
+        $encryptedPassword = openssl_encrypt(
+            $plainPassword,
+            self::CIPHER,
+            $userKey,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        if ($encryptedPassword === false) {
+            throw new RuntimeException('Password encryption failed.');
+        }
+
+        return [
+            'encrypted_password' => base64_encode($encryptedPassword),
+            'password_iv' => base64_encode($iv),
+            'password_tag' => base64_encode($tag)
+        ];
+    }
+
+    private function deriveKey(string $plainPassword, string $salt): string
+    {
+        return hash_pbkdf2(
+            'sha256',
+            $plainPassword,
+            $salt,
+            self::ITERATIONS,
+            self::KEY_LENGTH,
+            true
+        );
+    }
+
+    private function decodeValue(string $encodedValue): string
+    {
+        $decodedValue = base64_decode($encodedValue, true);
+
+        if ($decodedValue === false) {
+            throw new RuntimeException('Stored encrypted data is invalid.');
+        }
+
+        return $decodedValue;
     }
 }

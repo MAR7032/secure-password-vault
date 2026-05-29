@@ -35,10 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($authenticatedUser !== false) {
             session_regenerate_id(true);
 
-            $_SESSION['user_id'] = $authenticatedUser['id'];
-            $_SESSION['username'] = $authenticatedUser['username'];
+         $_SESSION['user_id'] = $authenticatedUser['id'];
+         $_SESSION['username'] = $authenticatedUser['username'];
+          $_SESSION['user_key'] = $authenticatedUser['user_key'];
 
-            header('Location: dashboard.php');
+          header('Location: dashboard.php');
             exit;
         }
 

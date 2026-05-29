@@ -93,7 +93,7 @@ class User
         return 'Account created successfully.';
     }
 
-    public function authenticate(string $username, string $password): array|false
+       public function authenticate(string $username, string $password): array|false
     {
         $username = trim($username);
 
@@ -102,7 +102,14 @@ class User
         }
 
         $statement = $this->connection->prepare(
-            'SELECT id, username, password_hash
+            'SELECT
+                id,
+                username,
+                password_hash,
+                encrypted_key,
+                key_iv,
+                key_tag,
+                key_salt
              FROM users
              WHERE username = :username'
         );
@@ -121,9 +128,24 @@ class User
             return false;
         }
 
+        try {
+            $userKey = $this->encryptionService->decryptUserKey(
+                $password,
+                [
+                    'encrypted_key' => $user['encrypted_key'],
+                    'key_iv' => $user['key_iv'],
+                    'key_tag' => $user['key_tag'],
+                    'key_salt' => $user['key_salt']
+                ]
+            );
+        } catch (RuntimeException $exception) {
+            return false;
+        }
+
         return [
             'id' => (int) $user['id'],
-            'username' => $user['username']
+            'username' => $user['username'],
+            'user_key' => base64_encode($userKey)
         ];
     }
 }

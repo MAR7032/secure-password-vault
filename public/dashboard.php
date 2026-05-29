@@ -30,11 +30,13 @@ $username = $_SESSION['username'];
 
             <p>Your account login is working successfully.</p>
 
+           <a class="button" href="add_password.php">Add Password Record</a>
+
             <p class="link-text">
-                Password storage features will be added in the next version.
+             Encrypted password storage is available.
             </p>
 
-            <a class="button" href="logout.php">Logout</a>
+             <a class="button secondary-button" href="logout.php">Logout</a>
         </section>
     </main>
 </body>
