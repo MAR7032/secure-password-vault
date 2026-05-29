@@ -82,3 +82,23 @@ body {
 .link-text a {
     color: #173f73;
 }
+
+.success-message {
+    padding: 12px;
+    margin-bottom: 18px;
+    border: 1px solid #87c38f;
+    border-radius: 6px;
+    background: #e9f7ec;
+    color: #17652b;
+    text-align: center;
+}
+
+.error-message {
+    padding: 12px;
+    margin-bottom: 18px;
+    border: 1px solid #df9292;
+    border-radius: 6px;
+    background: #fdecec;
+    color: #8e1b1b;
+    text-align: center;
+}
