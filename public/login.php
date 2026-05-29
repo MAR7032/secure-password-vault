@@ -2,45 +2,49 @@
 
 declare(strict_types=1);
 
+session_start();
+
 require_once __DIR__ . '/../classes/Database.php';
 require_once __DIR__ . '/../classes/EncryptionService.php';
 require_once __DIR__ . '/../classes/User.php';
 
 $config = require __DIR__ . '/../config/database.local.php';
 
-$pageTitle = 'Create Account';
 $message = '';
-$messageClass = '';
 $username = '';
+
+if (isset($_SESSION['user_id'])) {
+    header('Location: dashboard.php');
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
-    $confirmPassword = $_POST['confirm_password'] ?? '';
 
     try {
         $database = new Database($config);
-        $encryptionService = new EncryptionService();
+
         $user = new User(
             $database->getConnection(),
-            $encryptionService
+            new EncryptionService()
         );
 
-        $message = $user->register(
-            $username,
-            $password,
-            $confirmPassword
-        );
+        $authenticatedUser = $user->authenticate($username, $password);
 
-        if ($message === 'Account created successfully.') {
-            $messageClass = 'success-message';
-            $username = '';
-        } else {
-            $messageClass = 'error-message';
+        if ($authenticatedUser !== false) {
+            session_regenerate_id(true);
+
+            $_SESSION['user_id'] = $authenticatedUser['id'];
+            $_SESSION['username'] = $authenticatedUser['username'];
+
+            header('Location: dashboard.php');
+            exit;
         }
+
+        $message = 'Invalid username or password.';
     } catch (RuntimeException $exception) {
         $message = 'Database connection failed.';
-        $messageClass = 'error-message';
     }
 }
 ?>
@@ -49,17 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title><?php echo htmlspecialchars($pageTitle); ?> | Secure Password Vault</title>
+    <title>Login | Secure Password Vault</title>
     <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
     <main class="page-container">
         <section class="card">
             <h1>Secure Password Vault</h1>
-            <p class="subtitle">Create your account</p>
+            <p class="subtitle">Login to your account</p>
 
             <?php if ($message !== ''): ?>
-                <p class="<?php echo $messageClass; ?>">
+                <p class="error-message">
                     <?php echo htmlspecialchars($message); ?>
                 </p>
             <?php endif; ?>
@@ -86,21 +90,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     >
                 </div>
 
-                <div class="form-group">
-                    <label for="confirm_password">Confirm Password</label>
-                    <input
-                        type="password"
-                        id="confirm_password"
-                        name="confirm_password"
-                        required
-                    >
-                </div>
-
-                <button class="button" type="submit">Create Account</button>
+                <button class="button" type="submit">Login</button>
             </form>
 
             <p class="link-text">
-                Already have an account? <a href="login.php">Login</a>
+                Need an account? <a href="register.php">Register</a>
             </p>
         </section>
     </main>

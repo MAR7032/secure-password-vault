@@ -92,4 +92,38 @@ class User
 
         return 'Account created successfully.';
     }
+
+    public function authenticate(string $username, string $password): array|false
+    {
+        $username = trim($username);
+
+        if ($username === '' || $password === '') {
+            return false;
+        }
+
+        $statement = $this->connection->prepare(
+            'SELECT id, username, password_hash
+             FROM users
+             WHERE username = :username'
+        );
+
+        $statement->execute([
+            'username' => $username
+        ]);
+
+        $user = $statement->fetch();
+
+        if ($user === false) {
+            return false;
+        }
+
+        if (!password_verify($password, $user['password_hash'])) {
+            return false;
+        }
+
+        return [
+            'id' => (int) $user['id'],
+            'username' => $user['username']
+        ];
+    }
 }
