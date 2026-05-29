@@ -35,9 +35,11 @@ $username = $_SESSION['username'];
              <a class="button secondary-button" href="view_passwords.php">View Saved Passwords</a>
              <a class="button secondary-button" href="generate_password.php">Generate Password</a>
 
-           <p class="link-text">
-    Encrypted password storage is available.
-           </p>
+            <a class="button secondary-button" href="change_password.php">Change Login Password</a>
+
+             <p class="link-text">
+                       Encrypted password storage is available.
+            </p>
 
           <a class="button secondary-button" href="logout.php">Logout</a>
         </section>

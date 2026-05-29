@@ -65,31 +65,38 @@ class EncryptionService
 
         return $userKey;
     }
-         public function decryptStoredPassword(
-        string $encryptedPassword,
-        string $passwordIv,
-        string $passwordTag,
-        string $userKey
-    ): string {
-        $encryptedValue = $this->decodeValue($encryptedPassword);
-        $iv = $this->decodeValue($passwordIv);
-        $tag = $this->decodeValue($passwordTag);
 
-        $plainPassword = openssl_decrypt(
-            $encryptedValue,
-            self::CIPHER,
+    public function encryptExistingUserKey(
+        string $userKey,
+        string $newPlainPassword
+    ): array {
+        $salt = random_bytes(self::SALT_LENGTH);
+        $iv = random_bytes(openssl_cipher_iv_length(self::CIPHER));
+
+        $derivedKey = $this->deriveKey($newPlainPassword, $salt);
+        $tag = '';
+
+        $encryptedKey = openssl_encrypt(
             $userKey,
+            self::CIPHER,
+            $derivedKey,
             OPENSSL_RAW_DATA,
             $iv,
             $tag
         );
 
-        if ($plainPassword === false) {
-            throw new RuntimeException('Password decryption failed.');
+        if ($encryptedKey === false) {
+            throw new RuntimeException('Key encryption failed.');
         }
 
-        return $plainPassword;
+        return [
+            'encrypted_key' => base64_encode($encryptedKey),
+            'key_iv' => base64_encode($iv),
+            'key_tag' => base64_encode($tag),
+            'key_salt' => base64_encode($salt)
+        ];
     }
+
     public function encryptStoredPassword(
         string $plainPassword,
         string $userKey
@@ -115,6 +122,32 @@ class EncryptionService
             'password_iv' => base64_encode($iv),
             'password_tag' => base64_encode($tag)
         ];
+    }
+
+    public function decryptStoredPassword(
+        string $encryptedPassword,
+        string $passwordIv,
+        string $passwordTag,
+        string $userKey
+    ): string {
+        $encryptedValue = $this->decodeValue($encryptedPassword);
+        $iv = $this->decodeValue($passwordIv);
+        $tag = $this->decodeValue($passwordTag);
+
+        $plainPassword = openssl_decrypt(
+            $encryptedValue,
+            self::CIPHER,
+            $userKey,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag
+        );
+
+        if ($plainPassword === false) {
+            throw new RuntimeException('Password decryption failed.');
+        }
+
+        return $plainPassword;
     }
 
     private function deriveKey(string $plainPassword, string $salt): string

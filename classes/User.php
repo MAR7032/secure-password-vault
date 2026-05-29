@@ -93,7 +93,7 @@ class User
         return 'Account created successfully.';
     }
 
-       public function authenticate(string $username, string $password): array|false
+    public function authenticate(string $username, string $password): array|false
     {
         $username = trim($username);
 
@@ -147,5 +147,112 @@ class User
             'username' => $user['username'],
             'user_key' => base64_encode($userKey)
         ];
+    }
+
+    public function changePassword(
+        int $userId,
+        string $currentPassword,
+        string $newPassword,
+        string $confirmNewPassword
+    ): string {
+        if (
+            $currentPassword === '' ||
+            $newPassword === '' ||
+            $confirmNewPassword === ''
+        ) {
+            return 'All fields are required.';
+        }
+
+        if (strlen($newPassword) < 8) {
+            return 'New password must contain at least 8 characters.';
+        }
+
+        if ($newPassword !== $confirmNewPassword) {
+            return 'New passwords do not match.';
+        }
+
+        if ($currentPassword === $newPassword) {
+            return 'New password must be different from the current password.';
+        }
+
+        $statement = $this->connection->prepare(
+            'SELECT
+                password_hash,
+                encrypted_key,
+                key_iv,
+                key_tag,
+                key_salt
+             FROM users
+             WHERE id = :id'
+        );
+
+        $statement->execute([
+            'id' => $userId
+        ]);
+
+        $user = $statement->fetch();
+
+        if ($user === false) {
+            return 'User account was not found.';
+        }
+
+        if (!password_verify($currentPassword, $user['password_hash'])) {
+            return 'Current password is incorrect.';
+        }
+
+        try {
+            $sameUserKey = $this->encryptionService->decryptUserKey(
+                $currentPassword,
+                [
+                    'encrypted_key' => $user['encrypted_key'],
+                    'key_iv' => $user['key_iv'],
+                    'key_tag' => $user['key_tag'],
+                    'key_salt' => $user['key_salt']
+                ]
+            );
+
+            $newPasswordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+
+            if ($newPasswordHash === false) {
+                return 'Password change failed.';
+            }
+
+            $reencryptedKey = $this->encryptionService->encryptExistingUserKey(
+                $sameUserKey,
+                $newPassword
+            );
+
+            $this->connection->beginTransaction();
+
+            $updateStatement = $this->connection->prepare(
+                'UPDATE users
+                 SET
+                    password_hash = :password_hash,
+                    encrypted_key = :encrypted_key,
+                    key_iv = :key_iv,
+                    key_tag = :key_tag,
+                    key_salt = :key_salt
+                 WHERE id = :id'
+            );
+
+            $updateStatement->execute([
+                'password_hash' => $newPasswordHash,
+                'encrypted_key' => $reencryptedKey['encrypted_key'],
+                'key_iv' => $reencryptedKey['key_iv'],
+                'key_tag' => $reencryptedKey['key_tag'],
+                'key_salt' => $reencryptedKey['key_salt'],
+                'id' => $userId
+            ]);
+
+            $this->connection->commit();
+        } catch (Throwable $exception) {
+            if ($this->connection->inTransaction()) {
+                $this->connection->rollBack();
+            }
+
+            return 'Password change failed.';
+        }
+
+        return 'Login password changed successfully.';
     }
 }
